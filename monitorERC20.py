@@ -62,7 +62,7 @@ def send_request(request):
     raise Exception('No result returned')
 
 def save_list_to_file(liste):
-    thefile = open('test.txt', 'w')
+    thefile = open('transactions.txt', 'w')
     for item in liste:
         thefile.write("%s\n" % item)
 
@@ -112,6 +112,8 @@ def monitor():
                 
             except StandardError as ex:
                 print ex
-    save_list_to_file(tx_set)
+                
+    return tx_set 
 
-monitor()
+transactions = monitor()
+save_list_to_file(transactions)
