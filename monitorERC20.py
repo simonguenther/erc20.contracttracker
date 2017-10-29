@@ -3,16 +3,30 @@ import requests
 import random
 import codecs
 import time
+from time import gmtime, strftime
 
 BANCOR_SMART_CONTRACT = '0x1f573d6fb3f13d689ff844b4ce37794d79a7ff1c'
 ENIGMA_SMART_CONTRACT = '0xf0Ee6b27b759C9893Ce4f094b49ad28fd15A23e4'
-                         
-VIBERATE_SMART_CONTRACT = '0x57D02550f47dd932d2fB84E0aA883C9D8d53C313'
+VIBERATE_SMART_CONTRACT = '0x2C974B2d0BA1716E644c1FC59982a89DDD2fF724'
 
 WEI_TO_ETH = 1e-18
 BNT_TO_ETH = 1e-2
-BLOCK_START =   4358024
-BLOCK_END = 4393704
+
+
+# first transaction in smart contract
+BLOCK_START = 4338978
+BLOCK_END = BLOCK_START + 50000 # first transfer 
+
+
+#Total
+#BLOCK_START =   4240691
+#BLOCK_END = 4432694
+
+"""
+#Vib Crowdsale
+BLOCK_START =   4240935
+BLOCK_END = 4348935
+"""
 
 def log(*args):
   print('-' * 40)
@@ -85,35 +99,35 @@ def to_from_is_enigma_transaction(raw_tx):
     else:
         from_ = raw_tx["from"].lower()
     
-    if ENIGMA_SMART_CONTRACT.lower() in [to, from_]:
-        return True
+    if VIBERATE_SMART_CONTRACT.lower() in [to, from_]:
+        return raw_tx["hash"]
     return False
 
 def monitor():
-    tx_set = []
+    tx_set = {}
     count = 0
     one_percent = (BLOCK_END - BLOCK_START) // 100
+    print "Processing: " + str(BLOCK_END - BLOCK_START) + " Blocks"
     for block_number in range(BLOCK_START,BLOCK_END):
         if (block_number - BLOCK_START) % one_percent == 0:
-            print('{0}% done'.format((block_number - BLOCK_START) // one_percent))
+           print(str(strftime("%H:%M:%S", gmtime())) + ' {0}% done'.format((block_number - BLOCK_START) // one_percent))
         block = send_request({
             'method': 'eth_getBlockByNumber',
             'params' : [hex(block_number), True]
         })
-        
+        #print block_number
         #print "Number of transactions: " + str(len(block["transactions"]))
         count +=1
         for tx in block["transactions"]:
             try:
-            
-                if to_from_is_enigma_transaction(tx):
-                    tx_set.append(tx)
-                
-                
+                save_tx = to_from_is_enigma_transaction(tx)
+                if save_tx:
+                    tx_set[save_tx] = tx 
             except StandardError as ex:
                 print ex
                 
     return tx_set 
 
 transactions = monitor()
-save_list_to_file(transactions)
+save_dictionary_to_json('viberate_50k_after_sale.json', transactions)
+#save_list_to_file(transactions)
